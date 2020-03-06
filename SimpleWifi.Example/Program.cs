@@ -37,9 +37,19 @@ namespace SimpleWifi.Example
                 Execute(command);
                 Thread.Sleep(500);
             }
-            else if(args.Count()==3 && args.Contains("connect") && args.Contains("/ssid:") && args.Contains("/password:"))
+            else if(args.Count()==5 && args[0].Contains("connect") && args[1].Contains("/ssid:") && args[2].Contains("/password:") && args[3].Contains("/username:") && args[4].Contains("/domain:"))
             {
-
+                var ssid = args[1].Length > "/ssid:".Length ? args[1].Substring(6) : null;
+                var password = args[2].Length > "/password:".Length ? args[2].Substring(10) : null;
+                var username = args[3].Length> "/username:".Length? args[3].Substring(10) : null;
+                var domain =   args[4].Length > "/domain:".Length ? args[4].Substring(8) : null;
+                if(ssid != null)
+                {
+                    Connect(ssid,password,username,domain);
+                    Thread.Sleep(2000);
+                }
+                else
+                    Console.WriteLine("\r\nplease enter ssid");
             }
             else
             {
@@ -129,7 +139,7 @@ namespace SimpleWifi.Example
 		private static IEnumerable<AccessPoint> List()
 		{
             ScanWifi();
-            Thread.Sleep(500);
+            Thread.Sleep(1000);
             Console.WriteLine("\r\n-- Access point list --");
 			IEnumerable<AccessPoint> accessPoints = wifi.GetAccessPoints().OrderByDescending(ap => ap.SignalStrength);
 
@@ -210,25 +220,55 @@ namespace SimpleWifi.Example
             }
             
         }
-        private static void Connect(string ssid,string password)
+        private static void Connect(string ssid,string password=null, string username=null,string domainname=null)
         {
             var accessPoints = List();
 
             var selectedAP =  accessPoints.Where(x => x.Name == ssid).FirstOrDefault();
             //Auth
-            AuthRequest authRequest = new AuthRequest(selectedAP);
-            bool overwrite = true;
+
             if (selectedAP != null)
             {
+                AuthRequest authRequest = new AuthRequest(selectedAP);
+                bool overwrite = false;
+                if (authRequest.IsPasswordRequired)
+                {
+                    if (PasswordPrompt(selectedAP,password))
+                    {
+                        authRequest.Password = password;
+                        if (selectedAP.HasProfile)
+                        {
+                            overwrite = true;
+                        }
+                    }
 
+                    if (overwrite)
+                    {
+                        if (authRequest.IsUsernameRequired)
+                        {
+                            if(username != null)
+                                authRequest.Username = username;
+                        }
+
+                        
+
+                        if (authRequest.IsDomainSupported)
+                        {
+                            if(domainname != null)
+                                authRequest.Domain = Console.ReadLine();
+                        }
+                    }
+                }
+                selectedAP.ConnectAsync(authRequest, overwrite, OnConnectedComplete);
             }
             else
-                selectedAP.ConnectAsync(authRequest, overwrite, OnConnectedComplete);
+                Console.WriteLine($"Can't find access point {ssid}");
+
+
         }
 
         private static void Connect()
 		{
-
             var accessPoints = List();
 
 			Console.Write("\r\nEnter the index of the network you wish to connect to: ");
@@ -297,8 +337,21 @@ namespace SimpleWifi.Example
 
 			return password;
 		}
+        private static bool PasswordPrompt(AccessPoint selectedAP,string password)
+        {
 
-		private static void ProfileXML()
+            bool validPassFormat = false;
+
+
+            validPassFormat = selectedAP.IsValidPassword(password);
+
+            if (!validPassFormat)
+                Console.WriteLine("\r\nPassword is not valid for this network type.");
+
+            return validPassFormat;
+        }
+
+        private static void ProfileXML()
 		{
 			var accessPoints = List();
 
@@ -368,7 +421,7 @@ namespace SimpleWifi.Example
 
 		private static void OnConnectedComplete(bool success)
 		{
-			Console.WriteLine("\nOnConnectedComplete, success: {0}", success);
+			Console.WriteLine("\nOnConnectedComplete success: {0}", success);
 		}
 
 
