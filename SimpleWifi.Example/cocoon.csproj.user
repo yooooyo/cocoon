@@ -8,6 +8,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <StartArguments>connect /ssid:Apple_A1392_2.4G /password:12345678</StartArguments>
-    <StartWorkingDirectory>C:\Users\ZapMaster PV\Documents\Work\HP_Project\simplewifi-example\simplewifi-example\SimpleWifi.Example\bin\Debug</StartWorkingDirectory>
+    <StartWorkingDirectory>D:\Work\HP_Project\simplewifi-example\</StartWorkingDirectory>
   </PropertyGroup>
 </Project>

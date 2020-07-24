@@ -11,6 +11,7 @@ using Windows.Devices.WiFi;
 using Windows.Networking.Connectivity;
 using Windows.Devices.Radios;
 using System.Diagnostics;
+using System.IO;
 
 namespace SimpleWifi.Example
 {
@@ -19,6 +20,7 @@ namespace SimpleWifi.Example
 		private static Wifi wifi;
         private static WiFiAdapter firstAdapter;
         private static Radio wifiRadio;
+        private static Radio bleRadio;
         private static bool? radiochange;
         private static void Main(string[] args)
 		{
@@ -64,9 +66,13 @@ namespace SimpleWifi.Example
                     Console.WriteLine("X. Print profile XML");
                     Console.WriteLine("R. Remove profile");
                     Console.WriteLine("I. Show access point information");
+
                     Console.WriteLine("SCAN. Rescan access point");
-                    Console.WriteLine("ON.   Turn on wi-fi radio button");
-                    Console.WriteLine("OFF.  Turn off wi-fi radio button");
+                    Console.WriteLine("WIFI-ON.   Turn on wi-fi radio button");
+                    Console.WriteLine("WIFI-OFF.  Turn off wi-fi radio button");
+                    Console.WriteLine("BLE-ON.   Turn on bluetooth radio button");
+                    Console.WriteLine("BLE-OFF.  Turn off bluetooth radio button");
+                    Console.WriteLine("AIRSWITCH.  Switch airplane mode");
                     Console.WriteLine("Q. Quit");
                     Console.WriteLine("");
 
@@ -82,7 +88,9 @@ namespace SimpleWifi.Example
 
         private static void Execute(string command)
 		{
-			switch (command)
+            command.ToLower();
+
+            switch (command)
 			{
 				case "l":
 					List();
@@ -108,17 +116,28 @@ namespace SimpleWifi.Example
                 case "scan":
                     ScanWifi();
                     break;
-                case "on":
+                case "wifi-on":
                     OnOffWifi(true);
                     break;
-                case "off":
+                case "wifi-off":
                     OnOffWifi(false);
+                    break;
+                case "ble-on":
+                    OnOffBLE(true);
+                    break;
+                case "ble-off":
+                    OnOffBLE(false);
+                    break;
+                case "airswitch":
+                    switchAirplane();
                     break;
                 case "q":
 					break;
 				default:
 					Console.WriteLine("\r\nIncorrect command.");
-					break;
+                    Console.WriteLine("or use");
+                    Console.WriteLine("connect /ssid:<ssid> /password:<password>.   Connect AP");
+                    break;
 			}
 		}
 
@@ -150,6 +169,81 @@ namespace SimpleWifi.Example
 			return accessPoints;
 		}
 
+        private static async void switchAirplane()
+        {
+            radiochange = null;
+            var access = await Radio.RequestAccessAsync();
+            if (access == RadioAccessStatus.Allowed)
+            {
+                wifiRadio = (await Radio.GetRadiosAsync()).Where(x => x.Kind == RadioKind.WiFi).FirstOrDefault();
+                wifiRadio.StateChanged += WifiRadio_StateChanged;
+                var batch = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "airplaneswitch.bat");
+
+                if (File.Exists(batch))
+                {
+                    try
+                    {
+                        var prestate = wifiRadio.State;
+                        if(Process.Start(batch).WaitForExit(5000))
+                        {
+                            if(prestate != wifiRadio.State)
+                            {
+                                Console.WriteLine("airplaneswitch.bat operation pass");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("airplaneswitch.bat operation fail");
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine(e.ToString());
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Can't find airplaneswitch.bat");
+                }
+            }
+        }
+        private static async void OnOffBLE(bool turn)
+        {
+            radiochange = null;
+            var access = await Radio.RequestAccessAsync();
+            if (access == RadioAccessStatus.Allowed)
+            {
+                bleRadio = (await Radio.GetRadiosAsync()).Where(x => x.Kind == RadioKind.Bluetooth).FirstOrDefault();
+                bleRadio.StateChanged += WifiRadio_StateChanged;
+                if (bleRadio != null)
+                {
+                    if (turn)
+                    {
+                        if (bleRadio.State == RadioState.Off)
+                        {
+                            radiochange = false;
+                            await bleRadio.SetStateAsync(RadioState.On);
+                            while (radiochange == false) ;
+                        }
+
+                    }
+                    else
+                    {
+                        if (bleRadio.State == RadioState.On)
+                        {
+                            radiochange = false;
+                            await bleRadio.SetStateAsync(RadioState.Off);
+                            while (radiochange == false) ;
+                        }
+                    }
+                }
+
+            }
+            else
+            {
+                Console.WriteLine("\r\nNot allowed to access Radios");
+            }
+        }
 
         private static async void OnOffWifi(bool turn)
         {
@@ -157,9 +251,9 @@ namespace SimpleWifi.Example
             var access = await Radio.RequestAccessAsync();
             if(access == RadioAccessStatus.Allowed)
             {
-                wifiRadio = (await Radio.GetRadiosAsync()).Where(x=>x.Kind == RadioKind.WiFi).FirstOrDefault();
+                wifiRadio = (await Radio.GetRadiosAsync()).Where(x => x.Kind == RadioKind.WiFi).FirstOrDefault();
                 wifiRadio.StateChanged += WifiRadio_StateChanged;
-                if (wifiRadio!= null)
+                if (wifiRadio != null)
                 {
                     if (turn)
                     {
