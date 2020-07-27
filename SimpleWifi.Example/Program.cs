@@ -12,6 +12,7 @@ using Windows.Networking.Connectivity;
 using Windows.Devices.Radios;
 using System.Diagnostics;
 using System.IO;
+using Microsoft.Win32;
 
 namespace SimpleWifi.Example
 {
@@ -72,7 +73,10 @@ namespace SimpleWifi.Example
                     Console.WriteLine("WIFI-OFF.  Turn off wi-fi radio button");
                     Console.WriteLine("BLE-ON.   Turn on bluetooth radio button");
                     Console.WriteLine("BLE-OFF.  Turn off bluetooth radio button");
-                    Console.WriteLine("AIRSWITCH.  Switch airplane mode");
+                    Console.WriteLine("AIR-SWITCH.  Switch airplane mode");
+                    Console.WriteLine("AIR-CHECK.   Switch airplane mode");
+                    Console.WriteLine("AIR-ON.   Switch airplane mode");
+                    Console.WriteLine("AIR-OFF.  Switch airplane mode");
                     Console.WriteLine("Q. Quit");
                     Console.WriteLine("");
 
@@ -128,8 +132,17 @@ namespace SimpleWifi.Example
                 case "ble-off":
                     OnOffBLE(false);
                     break;
-                case "airswitch":
+                case "air-switch":
                     switchAirplane();
+                    break;
+                case "air-on":
+                    switchAirplane("on");
+                    break;
+                case "air-off":
+                    switchAirplane("off");
+                    break;
+                case "air-check":
+                    switchAirplane("check");
                     break;
                 case "q":
 					break;
@@ -168,43 +181,94 @@ namespace SimpleWifi.Example
 
 			return accessPoints;
 		}
-
-        private static async void switchAirplane()
+        static int ariplane_reg
+        {
+            get
+            {
+                return (int)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\RadioManagement\SystemRadioState", "", "");
+            }
+        }
+        private static async void switchAirplane(string option="switch")
         {
             radiochange = null;
-            var access = await Radio.RequestAccessAsync();
-            if (access == RadioAccessStatus.Allowed)
-            {
-                wifiRadio = (await Radio.GetRadiosAsync()).Where(x => x.Kind == RadioKind.WiFi).FirstOrDefault();
-                wifiRadio.StateChanged += WifiRadio_StateChanged;
-                var batch = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "airplaneswitch.bat");
 
-                if (File.Exists(batch))
+            var batch = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "airplaneswitch.bat");
+            if (File.Exists(batch))
+            {
+                try
                 {
-                    try
+                    var prestate = ariplane_reg;
+                    switch (option)
                     {
-                        var prestate = wifiRadio.State;
-                        if(Process.Start(batch).WaitForExit(5000))
-                        {
-                            if(prestate != wifiRadio.State)
+                        case "switch":
+  
+                            if (Process.Start(batch).WaitForExit(5000))
                             {
-                                Console.WriteLine("airplaneswitch.bat operation pass");
+                                if (prestate != ariplane_reg)
+                                {
+                                    Console.WriteLine("airplaneswitch.bat operation pass");
+                                }
                             }
-                        }
-                        else
-                        {
-                            Console.WriteLine("airplaneswitch.bat operation fail");
-                        }
+                            else
+                            {
+                                Console.WriteLine("airplaneswitch.bat operation fail");
+                            }
+                            break;
+                        case "on":
+                            if(prestate == 0)
+                            {
+                                if (Process.Start(batch).WaitForExit(5000))
+                                {
+                                    if (prestate != ariplane_reg)
+                                    {
+                                        Console.WriteLine("airplaneswitch.bat operation pass");
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("airplaneswitch.bat operation fail");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("already on");
+                            }
+                            break;
+                        case "off":
+                            if (prestate == 1)
+                            {
+                                if (Process.Start(batch).WaitForExit(5000))
+                                {
+                                    if (prestate != ariplane_reg)
+                                    {
+                                        Console.WriteLine("airplaneswitch.bat operation pass");
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("airplaneswitch.bat operation fail");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("already off");
+                            }
+                            break;
+                        case "check":
+                            Console.WriteLine(ariplane_reg==0?"off":"on");
+                            break;
                     }
-                    catch(Exception e)
-                    {
-                        Console.WriteLine(e.ToString());
-                    }
+
+
                 }
-                else
+                catch(Exception e)
                 {
-                    Console.WriteLine("Can't find airplaneswitch.bat");
+                    Console.WriteLine(e.ToString());
                 }
+            }
+            else
+            {
+                Console.WriteLine("Can't find airplaneswitch.bat");
             }
         }
         private static async void OnOffBLE(bool turn)
