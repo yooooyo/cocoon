@@ -13,6 +13,7 @@ using Windows.Devices.Radios;
 using System.Diagnostics;
 using System.IO;
 using Microsoft.Win32;
+using Windows.Networking.NetworkOperators;
 
 namespace SimpleWifi.Example
 {
@@ -25,8 +26,8 @@ namespace SimpleWifi.Example
         private static bool? radiochange;
         private static void Main(string[] args)
 		{
-			// Init wifi object and event handlers
-			wifi = new Wifi();
+            // Init wifi object and event handlers
+            wifi = new Wifi();
 			wifi.ConnectionStatusChanged += wifi_ConnectionStatusChanged;
             
 
@@ -77,6 +78,8 @@ namespace SimpleWifi.Example
                     Console.WriteLine("AIR-CHECK.   Switch airplane mode");
                     Console.WriteLine("AIR-ON.   Switch airplane mode");
                     Console.WriteLine("AIR-OFF.  Switch airplane mode");
+                    Console.WriteLine("HOTSPOT-ON.   Turn hotspot on");
+                    Console.WriteLine("HOTSPOT-OFF.  Turn hotspot off");
                     Console.WriteLine("Q. Quit");
                     Console.WriteLine("");
 
@@ -87,7 +90,6 @@ namespace SimpleWifi.Example
 
             }
         }
-
 
 
         private static void Execute(string command)
@@ -144,6 +146,12 @@ namespace SimpleWifi.Example
                 case "air-check":
                     switchAirplane("check");
                     break;
+                case "hotspot-on":
+                    EnableHotspot();
+                    break;
+                case "hotspot-off":
+                    DisableHotspot();
+                    break;
                 case "q":
 					break;
 				default:
@@ -188,7 +196,7 @@ namespace SimpleWifi.Example
                 return (int)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\RadioManagement\SystemRadioState", "", "");
             }
         }
-        private static async void switchAirplane(string option="switch")
+        private static void switchAirplane(string option="switch")
         {
             radiochange = null;
 
@@ -561,7 +569,44 @@ namespace SimpleWifi.Example
 
 			Console.WriteLine("\r\n{0}\r\n", selectedAP.ToString());
 		}
+        private static async void EnableHotspot()
+        {
+            var connectionProfile = NetworkInformation.GetInternetConnectionProfile();
+            var tetheringManager  = NetworkOperatorTetheringManager.CreateFromConnectionProfile(connectionProfile);
 
+            if (tetheringManager.TetheringOperationalState == TetheringOperationalState.Off)
+            {
+                var task = await tetheringManager.StartTetheringAsync();
+                if(task.Status == TetheringOperationStatus.Success)
+                {
+                    Console.WriteLine("Hotspot Turn On");
+                }
+                else
+                {
+                    Console.WriteLine($"Hotsopt operation {task.Status}");
+                }
+            }
+
+        }
+        private static async void DisableHotspot()
+        {
+            var connectionProfile = NetworkInformation.GetInternetConnectionProfile();
+            var tetheringManager = NetworkOperatorTetheringManager.CreateFromConnectionProfile(connectionProfile);
+
+            if (tetheringManager.TetheringOperationalState == TetheringOperationalState.On)
+            {
+                var task = await tetheringManager.StopTetheringAsync();
+                if (task.Status == TetheringOperationStatus.Success)
+                {
+                    Console.WriteLine("Hotspot Turn Off");
+                }
+                else
+                {
+                    Console.WriteLine($"Hotsopt operation {task.Status}");
+                }
+            }
+
+        }
         private static void WifiRadio_StateChanged(Radio sender, object args)
         {
             Console.WriteLine($"\nRadio {sender.Name} change state {sender.State.ToString()}");
