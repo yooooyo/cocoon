@@ -80,6 +80,7 @@ namespace SimpleWifi.Example
                     Console.WriteLine("AIR-OFF.  Switch airplane mode");
                     Console.WriteLine("HOTSPOT-ON.   Turn hotspot on");
                     Console.WriteLine("HOTSPOT-OFF.  Turn hotspot off");
+                    Console.WriteLine("WWAN-FIRMWARE.  Get WWAN Firmware");
                     Console.WriteLine("Q. Quit");
                     Console.WriteLine("");
 
@@ -135,22 +136,25 @@ namespace SimpleWifi.Example
                     OnOffBLE(false);
                     break;
                 case "air-switch":
-                    switchAirplane();
+                    SwitchAirplane();
                     break;
                 case "air-on":
-                    switchAirplane("on");
+                    SwitchAirplane("on");
                     break;
                 case "air-off":
-                    switchAirplane("off");
+                    SwitchAirplane("off");
                     break;
                 case "air-check":
-                    switchAirplane("check");
+                    SwitchAirplane("check");
                     break;
                 case "hotspot-on":
                     EnableHotspot();
                     break;
                 case "hotspot-off":
                     DisableHotspot();
+                    break;
+                case "wwan-firmware":
+                    PrintMobileInfo("firmware");
                     break;
                 case "q":
 					break;
@@ -176,6 +180,100 @@ namespace SimpleWifi.Example
 				Console.WriteLine("You are not connected to a wifi");
 		}
 
+        static MobileBroadbandDeviceInformation getMobileInfo()
+        {
+            var modem = MobileBroadbandModem.GetDefault();
+            if(modem != null)
+            {
+                var info = modem.DeviceInformation;
+                if (info != null) return info;
+            }
+            Console.WriteLine("You have no wwan module");
+            return null;
+        }
+        
+        enum wwanInfoEnum
+        {
+            cellularclass,
+            radiostate,
+            deviceid,
+            devicetype,
+            firmware,
+            manufacturer,
+            mobileequipmentid,
+            model,
+            networkdevicestatus,
+            revision,
+            serialnumber,
+            simiccid,
+            subscriberid
+        }
+        static void PrintMobileInfo(string info)
+        {
+            var infoObj = getMobileInfo();
+            if (infoObj != null)
+            {
+                info = info.ToLower();
+                switch (info)
+                {
+                    case "cellularclass":
+                        Console.WriteLine(infoObj.CellularClass.ToString());
+                        break;
+                    case "radiostate":
+                        Console.WriteLine(infoObj.CurrentRadioState.ToString());
+                        break;
+                    case "deviceid":
+                        Console.WriteLine(infoObj.DeviceId);
+                        break;
+                    case "devicetype":
+                        Console.WriteLine(infoObj.DeviceType.ToString());
+                        break;
+                    case "firmware":
+                        Console.WriteLine(infoObj.FirmwareInformation);
+                        break;
+                    case "manufacturer":
+                        Console.WriteLine(infoObj.Manufacturer);
+                        break;
+                    case "mobileequipmentid":
+                        Console.WriteLine(infoObj.MobileEquipmentId);
+                        break;
+                    case "model":
+                        Console.WriteLine(infoObj.Model);
+                        break;
+                    case "networkdevicestatus":
+                        Console.WriteLine(infoObj.NetworkDeviceStatus.ToString());
+                        break;
+                    case "revision":
+                        Console.WriteLine(infoObj.Revision);
+                        break;
+                    case "serialnumber":
+                        Console.WriteLine(infoObj.SerialNumber);
+                        break;
+                    case "simiccid":
+                        Console.WriteLine(infoObj.SimIccId);
+                        break;
+                    case "subscriberid":
+                        Console.WriteLine(infoObj.SubscriberId);
+                        break;
+                    default:
+                        Console.WriteLine(infoObj.CellularClass.ToString());
+                        Console.WriteLine(infoObj.CurrentRadioState.ToString());
+                        Console.WriteLine(infoObj.DeviceId);
+                        Console.WriteLine(infoObj.DeviceType.ToString());
+                        Console.WriteLine(infoObj.FirmwareInformation);
+                        Console.WriteLine(infoObj.Manufacturer);
+                        Console.WriteLine(infoObj.MobileEquipmentId);
+                        Console.WriteLine(infoObj.Model);
+                        Console.WriteLine(infoObj.NetworkDeviceStatus.ToString());
+                        Console.WriteLine(infoObj.Revision);
+                        Console.WriteLine(infoObj.SerialNumber);
+                        Console.WriteLine(infoObj.SimIccId);
+                        Console.WriteLine(infoObj.SubscriberId);
+                        break;
+                }
+            }
+        }
+
 		private static IEnumerable<AccessPoint> List()
 		{
             ScanWifi();
@@ -196,7 +294,7 @@ namespace SimpleWifi.Example
                 return (int)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\RadioManagement\SystemRadioState", "", "");
             }
         }
-        private static void switchAirplane(string option="switch")
+        private static void SwitchAirplane(string option="switch")
         {
             radiochange = null;
 
