@@ -156,6 +156,9 @@ namespace SimpleWifi.Example
                 case "wwan-firmware":
                     PrintMobileInfo("firmware");
                     break;
+                case "wwan-all":
+                    PrintMobileInfo("all");
+                    break;
                 case "q":
 					break;
 				default:
@@ -256,19 +259,19 @@ namespace SimpleWifi.Example
                         Console.WriteLine(infoObj.SubscriberId);
                         break;
                     default:
-                        Console.WriteLine(infoObj.CellularClass.ToString());
-                        Console.WriteLine(infoObj.CurrentRadioState.ToString());
-                        Console.WriteLine(infoObj.DeviceId);
-                        Console.WriteLine(infoObj.DeviceType.ToString());
-                        Console.WriteLine(infoObj.FirmwareInformation);
-                        Console.WriteLine(infoObj.Manufacturer);
-                        Console.WriteLine(infoObj.MobileEquipmentId);
-                        Console.WriteLine(infoObj.Model);
-                        Console.WriteLine(infoObj.NetworkDeviceStatus.ToString());
-                        Console.WriteLine(infoObj.Revision);
-                        Console.WriteLine(infoObj.SerialNumber);
-                        Console.WriteLine(infoObj.SimIccId);
-                        Console.WriteLine(infoObj.SubscriberId);
+                        Console.WriteLine("Cellular Class: "+infoObj.CellularClass.ToString());
+                        Console.WriteLine("Current Radio State: "+infoObj.CurrentRadioState.ToString());
+                        Console.WriteLine("Device ID: "+infoObj.DeviceId);
+                        Console.WriteLine("Device Type: "+infoObj.DeviceType.ToString());
+                        Console.WriteLine("Firmware: "+infoObj.FirmwareInformation);
+                        Console.WriteLine("Manufacture: "+infoObj.Manufacturer);
+                        Console.WriteLine("MobileEquipmentId: " + infoObj.MobileEquipmentId);
+                        Console.WriteLine("Model: "+infoObj.Model);
+                        Console.WriteLine("Network Device Status: " + infoObj.NetworkDeviceStatus.ToString());
+                        Console.WriteLine("Revision: "+infoObj.Revision);
+                        Console.WriteLine("SerialNumber: " + infoObj.SerialNumber);
+                        Console.WriteLine("SimIccId: " + infoObj.SimIccId);
+                        Console.WriteLine("SubscriberId: " + infoObj.SubscriberId);
                         break;
                 }
             }

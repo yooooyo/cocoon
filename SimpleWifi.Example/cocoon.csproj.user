@@ -10,4 +10,8 @@
     <StartArguments>connect /ssid:Apple_A1392_2.4G /password:12345678</StartArguments>
     <StartWorkingDirectory>D:\Work\HP_Project\simplewifi-example\</StartWorkingDirectory>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <StartWorkingDirectory>D:\Work\HP_Project\simplewifi-example\</StartWorkingDirectory>
+    <StartArguments>connect /ssid:Apple_A1392_2.4G /password:12345678</StartArguments>
+  </PropertyGroup>
 </Project>
