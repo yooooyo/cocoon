@@ -182,12 +182,39 @@ namespace SimpleWifi.Example
 			else
 				Console.WriteLine("You are not connected to a wifi");
 		}
+        static MobileBroadbandModem getModem()
+        {
+            return MobileBroadbandModem.GetDefault();
+        }
+
+        static MobileBroadbandAccount getAccount()
+        {
+            var modem = getModem();
+            if (modem != null)
+            {
+                var account = modem.CurrentAccount;
+                if (account != null) return account;
+            }
+            Console.WriteLine("You have no mobile borband account");
+            return null;
+        }
+        static MobileBroadbandNetwork getNetwork()
+        {
+            var modem = getModem();
+            if (modem != null)
+            {
+                var network = modem.CurrentNetwork;
+                if (network != null) return network;
+            }
+            Console.WriteLine("You have no mobile borband network");
+            return null;
+        }
 
         static MobileBroadbandDeviceInformation getMobileInfo()
         {
-            var modem = MobileBroadbandModem.GetDefault();
+            var modem = getModem();
             if(modem != null)
-            {
+            {   
                 var info = modem.DeviceInformation;
                 if (info != null) return info;
             }
@@ -214,6 +241,8 @@ namespace SimpleWifi.Example
         static void PrintMobileInfo(string info)
         {
             var infoObj = getMobileInfo();
+            var network = getNetwork();
+            var account = getAccount();
             if (infoObj != null)
             {
                 info = info.ToLower();
@@ -272,6 +301,8 @@ namespace SimpleWifi.Example
                         Console.WriteLine("SerialNumber: " + infoObj.SerialNumber);
                         Console.WriteLine("SimIccId: " + infoObj.SimIccId);
                         Console.WriteLine("SubscriberId: " + infoObj.SubscriberId);
+                        if(account != null) Console.WriteLine("Service Provider Name: " + account.ServiceProviderName);
+                        if(network != null) Console.WriteLine("Registered Provider Name: " + network.RegisteredProviderName);
                         break;
                 }
             }
